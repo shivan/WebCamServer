@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.9.34728.123
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebCamServer", "WebCamServer.csproj", "{3C69EDB6-677B-4BAA-8746-91AA7D1E3337}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{3C69EDB6-677B-4BAA-8746-91AA7D1E3337}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3C69EDB6-677B-4BAA-8746-91AA7D1E3337}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3C69EDB6-677B-4BAA-8746-91AA7D1E3337}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3C69EDB6-677B-4BAA-8746-91AA7D1E3337}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {14181445-C469-4C48-99A8-D10724CC0F03}
+	EndGlobalSection
+EndGlobal
