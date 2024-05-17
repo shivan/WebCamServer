@@ -1,8 +1,11 @@
-﻿using System.Net.Sockets;
+﻿using System;
+using System.Net.Sockets;
 using System.Net;
 using AForge.Video.DirectShow;
 using AForge.Video;
 using System.Drawing;
+using System.IO;
+using System.Threading;
 
 public class HttpCameraServer
 {
@@ -115,44 +118,31 @@ public class HttpCameraServer
     {
         var client = (TcpClient)clientObj;
         var stream = client.GetStream();
+        var reader = new StreamReader(stream);
         var writer = new StreamWriter(stream);
 
         try
         {
             Console.WriteLine("Client connected.");
-            StartStreaming();
+            string requestLine = reader.ReadLine();
+            string[] tokens = requestLine.Split(' ');
+            string url = tokens[1];
 
-            writer.WriteLine("HTTP/1.1 200 OK");
-            writer.WriteLine("Content-Type: multipart/x-mixed-replace; boundary=--boundary");
-            writer.WriteLine();
-            writer.Flush();
-
-            while (client.Connected)
+            if (url == "/current.jpg")
             {
-                Bitmap frame;
-                lock (frameLock)
-                {
-                    frame = (Bitmap)currentFrame?.Clone();
-                }
-
-                if (frame != null)
-                {
-                    MemoryStream ms = new MemoryStream();
-                    frame.Save(ms, System.Drawing.Imaging.ImageFormat.Jpeg);
-
-                    writer.WriteLine("--boundary");
-                    writer.WriteLine("Content-Type: image/jpeg");
-                    writer.WriteLine($"Content-Length: {ms.Length}");
-                    writer.WriteLine();
-                    writer.Flush();
-
-                    ms.WriteTo(stream);
-                    writer.WriteLine();
-                    writer.Flush();
-
-                    ms.Close();
-                }
-                Thread.Sleep(100);
+                ServeCurrentImage(writer, stream);
+            }
+            else if (url == "/stream.jpg")
+            {
+                ServeStream(writer, stream, client);
+            }
+            else
+            {
+                writer.WriteLine("HTTP/1.1 404 Not Found");
+                writer.WriteLine("Content-Type: text/plain");
+                writer.WriteLine();
+                writer.WriteLine("Not Found");
+                writer.Flush();
             }
         }
         catch (Exception ex)
@@ -162,10 +152,84 @@ public class HttpCameraServer
         finally
         {
             Console.WriteLine("Client disconnected.");
-            StopStreaming();
             stream.Close();
             client.Close();
         }
+    }
+
+    private void ServeCurrentImage(StreamWriter writer, NetworkStream stream)
+    {
+        Bitmap frame;
+        lock (frameLock)
+        {
+            frame = (Bitmap)currentFrame?.Clone();
+        }
+
+        if (frame != null)
+        {
+            MemoryStream ms = new MemoryStream();
+            frame.Save(ms, System.Drawing.Imaging.ImageFormat.Jpeg);
+
+            writer.WriteLine("HTTP/1.1 200 OK");
+            writer.WriteLine("Content-Type: image/jpeg");
+            writer.WriteLine($"Content-Length: {ms.Length}");
+            writer.WriteLine();
+            writer.Flush();
+
+            ms.WriteTo(stream);
+            writer.WriteLine();
+            writer.Flush();
+
+            ms.Close();
+        }
+        else
+        {
+            writer.WriteLine("HTTP/1.1 503 Service Unavailable");
+            writer.WriteLine("Content-Type: text/plain");
+            writer.WriteLine();
+            writer.WriteLine("No image available");
+            writer.Flush();
+        }
+    }
+
+    private void ServeStream(StreamWriter writer, NetworkStream stream, TcpClient client)
+    {
+        StartStreaming();
+
+        writer.WriteLine("HTTP/1.1 200 OK");
+        writer.WriteLine("Content-Type: multipart/x-mixed-replace; boundary=--boundary");
+        writer.WriteLine();
+        writer.Flush();
+
+        while (client.Connected)
+        {
+            Bitmap frame;
+            lock (frameLock)
+            {
+                frame = (Bitmap)currentFrame?.Clone();
+            }
+
+            if (frame != null)
+            {
+                MemoryStream ms = new MemoryStream();
+                frame.Save(ms, System.Drawing.Imaging.ImageFormat.Jpeg);
+
+                writer.WriteLine("--boundary");
+                writer.WriteLine("Content-Type: image/jpeg");
+                writer.WriteLine($"Content-Length: {ms.Length}");
+                writer.WriteLine();
+                writer.Flush();
+
+                ms.WriteTo(stream);
+                writer.WriteLine();
+                writer.Flush();
+
+                ms.Close();
+            }
+            Thread.Sleep(100);
+        }
+
+        StopStreaming();
     }
 
     private void video_NewFrame(object sender, NewFrameEventArgs eventArgs)
