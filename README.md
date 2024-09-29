@@ -18,7 +18,7 @@ shows the help information.
 
 ```
 Usage:
-WebCamServer --device=<device name> --width=<resWidth> --heigth=<resHeigth>
+WebCamServer --device=<device name> --width=<resWidth> --heigth=<resHeigth> --port=<port>
 ```
 
 Device can be a part of the device name (case insensitive).
@@ -26,6 +26,8 @@ Device can be a part of the device name (case insensitive).
 Width and/or heigth can be selected, too. Otherwise default will be used.
 
 If you don't pass any parameters, it will show all available cameras and use the first one. Also it will show the available resolutions on the selected camera.
+
+Port is the http port to be used. Optional parameter.
 
 ## Run as service
 
