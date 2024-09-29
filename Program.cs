@@ -30,7 +30,7 @@ foreach (var arg in args)
     {
         resolutionHeight = int.Parse(arg.Split('=')[1]);
     }
-    else if (arg.StartsWith("--portt="))
+    else if (arg.StartsWith("--port="))
     {
         webPort = int.Parse(arg.Split('=')[1]);
     }
