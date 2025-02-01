@@ -15,6 +15,7 @@ public class HttpCameraServer
     private Bitmap? currentFrame;
     private object frameLock = new object();
     private bool isStreaming;
+    private bool currentImageReceived;
     private TcpListener? listener;
     private Thread? listenerThread;
 
@@ -164,6 +165,7 @@ public class HttpCameraServer
 
     private void ServeCurrentImage(StreamWriter writer, NetworkStream stream)
     {
+        StartCurrentImage();
         Bitmap frame;
         lock (frameLock)
         {
@@ -195,6 +197,7 @@ public class HttpCameraServer
             writer.WriteLine("No image available");
             writer.Flush();
         }
+        StopCurrentImage();
     }
 
     private void ServeStream(StreamWriter writer, NetworkStream stream, TcpClient client)
@@ -243,6 +246,7 @@ public class HttpCameraServer
         {
             currentFrame?.Dispose();
             currentFrame = (Bitmap)eventArgs.Frame.Clone();
+            currentImageReceived = true;
         }
     }
 
@@ -264,6 +268,30 @@ public class HttpCameraServer
             videoSource.WaitForStop();
             isStreaming = false;
             Console.WriteLine("Video streaming stopped.");
+        }
+    }
+
+    private void StartCurrentImage()
+    {
+        if (!isStreaming)
+        {
+            videoSource.Start();
+            currentImageReceived = false;
+            while(!currentImageReceived){
+              Thread.Sleep(500);
+              Console.WriteLine("Waiting for frame.");
+            }
+            Console.WriteLine("Camera enabled for current image capture.");
+        }
+    }
+
+    private void StopCurrentImage()
+    {
+        if (!isStreaming)
+        {
+            videoSource.SignalToStop();
+            videoSource.WaitForStop();
+            Console.WriteLine("Camera disabled after current image capture.");
         }
     }
 }
