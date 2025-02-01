@@ -18,7 +18,7 @@ public class HttpCameraServer
     private TcpListener? listener;
     private Thread? listenerThread;
 
-    public HttpCameraServer(int webPort, string deviceName, int resX = 0, int resY = 0)
+    public HttpCameraServer(int webPort, string deviceName, int resX = 0, int resY = 0, int focusValue = 0)
     {
         videoDevices = new FilterInfoCollection(FilterCategory.VideoInputDevice);
         this.Port = webPort;
@@ -58,6 +58,11 @@ public class HttpCameraServer
         Console.WriteLine($"Using device: {selectedDevice.Name}\n");
 
         videoSource = new VideoCaptureDevice(selectedDevice.MonikerString);
+        videoSource.SetCameraProperty(CameraControlProperty.Focus, 120, CameraControlFlags.Auto);
+        if(focusValue > 0)
+        {
+          videoSource.SetCameraProperty(CameraControlProperty.Focus, focusValue, CameraControlFlags.Manual);
+        }
         videoSource.NewFrame += new NewFrameEventHandler(video_NewFrame);
 
         Console.WriteLine("Available frame sizes:");
