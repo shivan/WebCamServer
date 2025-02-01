@@ -18,7 +18,7 @@ shows the help information.
 
 ```
 Usage:
-WebCamServer --device=<device name> --width=<resWidth> --heigth=<resHeigth> --port=<port>
+WebCamServer --device=<device name> --width=<resWidth> --heigth=<resHeigth> --port=<port> --focus=<0-250>
 ```
 
 Device can be a part of the device name (case insensitive).
