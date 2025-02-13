@@ -15,10 +15,11 @@ public class HttpCameraServer
     private Bitmap? currentFrame;
     private object frameLock = new object();
     private bool isStreaming;
+    private bool currentImageReceived;
     private TcpListener? listener;
     private Thread? listenerThread;
 
-    public HttpCameraServer(int webPort, string deviceName, int resX = 0, int resY = 0)
+    public HttpCameraServer(int webPort, string deviceName, int resX = 0, int resY = 0, int focusValue = 0)
     {
         videoDevices = new FilterInfoCollection(FilterCategory.VideoInputDevice);
         this.Port = webPort;
@@ -58,6 +59,11 @@ public class HttpCameraServer
         Console.WriteLine($"Using device: {selectedDevice.Name}\n");
 
         videoSource = new VideoCaptureDevice(selectedDevice.MonikerString);
+        videoSource.SetCameraProperty(CameraControlProperty.Focus, 120, CameraControlFlags.Auto);
+        if(focusValue > 0)
+        {
+          videoSource.SetCameraProperty(CameraControlProperty.Focus, focusValue, CameraControlFlags.Manual);
+        }
         videoSource.NewFrame += new NewFrameEventHandler(video_NewFrame);
 
         Console.WriteLine("Available frame sizes:");
@@ -159,6 +165,7 @@ public class HttpCameraServer
 
     private void ServeCurrentImage(StreamWriter writer, NetworkStream stream)
     {
+        StartCurrentImage();
         Bitmap frame;
         lock (frameLock)
         {
@@ -190,6 +197,7 @@ public class HttpCameraServer
             writer.WriteLine("No image available");
             writer.Flush();
         }
+        StopCurrentImage();
     }
 
     private void ServeStream(StreamWriter writer, NetworkStream stream, TcpClient client)
@@ -238,6 +246,7 @@ public class HttpCameraServer
         {
             currentFrame?.Dispose();
             currentFrame = (Bitmap)eventArgs.Frame.Clone();
+            currentImageReceived = true;
         }
     }
 
@@ -259,6 +268,30 @@ public class HttpCameraServer
             videoSource.WaitForStop();
             isStreaming = false;
             Console.WriteLine("Video streaming stopped.");
+        }
+    }
+
+    private void StartCurrentImage()
+    {
+        if (!isStreaming)
+        {
+            videoSource.Start();
+            currentImageReceived = false;
+            while(!currentImageReceived){
+              Thread.Sleep(500);
+              Console.WriteLine("Waiting for frame.");
+            }
+            Console.WriteLine("Camera enabled for current image capture.");
+        }
+    }
+
+    private void StopCurrentImage()
+    {
+        if (!isStreaming)
+        {
+            videoSource.SignalToStop();
+            videoSource.WaitForStop();
+            Console.WriteLine("Camera disabled after current image capture.");
         }
     }
 }
